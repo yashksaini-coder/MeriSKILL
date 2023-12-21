@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+	<meta charset='utf-8'>
+	<style>
+		.node {
+			cursor: pointer;
+		}
+
+		.node circle {
+			stroke-width: 3px;
+		}
+
+		.node text {
+			font: 12px helvetica;
+		}
+
+		.link {
+			fill: none;
+			stroke: #ccc;
+			stroke-width: 2px;
+		}
+	</style>
+</head>
+
+<body>
+	<script src="https://d3js.org/d3.v3.min.js"></script>
+	<script>
+
+		var margin = { top: 50, right: 100, bottom: 150, left: 50 };
+
+		// collect all inputs
+		var tree_depth = 10;
+		var rules = {"0": [], "1": ["Insulin <= -0.163"], "2": ["Insulin <= -0.302"], "3": ["Glucose <= 0.191", "Insulin <= -0.302"], "4": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302"], "5": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "DiabetesPedigreeFunction <= 0.503"], "6": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "DiabetesPedigreeFunction <= -0.675"], "7": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "DiabetesPedigreeFunction <= -0.697"], "8": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies <= 1.531", "DiabetesPedigreeFunction <= -0.697"], "9": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies > 1.531", "DiabetesPedigreeFunction <= -0.697"], "10": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "-0.697 < DiabetesPedigreeFunction <= -0.675"], "11": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "-0.675 < DiabetesPedigreeFunction <= 0.503"], "12": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "DiabetesPedigreeFunction > 0.503"], "13": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503"], "14": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies <= -0.993", "DiabetesPedigreeFunction > 0.503"], "15": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies <= -0.993", "SkinThickness <= 0.59", "DiabetesPedigreeFunction > 0.503"], "16": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "SkinThickness > 0.59", "Pregnancies <= -0.993", "DiabetesPedigreeFunction > 0.503"], "17": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "-0.993 < Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503"], "18": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "SkinThickness <= -0.924", "-0.993 < Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503"], "19": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "SkinThickness <= -1.148", "-0.993 < Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503"], "20": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "-0.993 < Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503", "-1.148 < SkinThickness <= -0.924"], "21": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "SkinThickness > -0.924", "-0.993 < Pregnancies <= -0.399", "DiabetesPedigreeFunction > 0.503"], "22": ["BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies > -0.399", "DiabetesPedigreeFunction > 0.503"], "23": ["BMI <= 1.877", "Age <= -0.02", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies > -0.399", "DiabetesPedigreeFunction > 0.503"], "24": ["Age > -0.02", "BMI <= 1.877", "Glucose <= 0.191", "Insulin <= -0.302", "Pregnancies > -0.399", "DiabetesPedigreeFunction > 0.503"], "25": ["BMI > 1.877", "Glucose <= 0.191", "Insulin <= -0.302"], "26": ["Glucose > 0.191", "Insulin <= -0.302"], "27": ["BMI <= -0.894", "Glucose > 0.191", "Insulin <= -0.302"], "28": ["BMI > -0.894", "Glucose > 0.191", "Insulin <= -0.302"], "29": ["BMI > -0.894", "Glucose > 0.191", "Insulin <= -0.302", "BloodPressure <= -0.779"], "30": ["BMI > -0.894", "Glucose > 0.191", "Insulin <= -0.302", "BloodPressure > -0.779"], "31": ["BMI > -0.894", "Age <= -0.063", "Glucose > 0.191", "Insulin <= -0.302", "BloodPressure > -0.779"], "32": ["BMI > -0.894", "Age > -0.063", "Glucose > 0.191", "Insulin <= -0.302", "BloodPressure > -0.779"], "33": ["BMI > -0.894", "Age > -0.063", "Insulin <= -0.302", "BloodPressure > -0.779", "0.191 < Glucose <= 0.995"], "34": ["BMI > -0.894", "Age > -0.063", "Insulin <= -0.302", "BloodPressure > -0.779", "0.191 < Glucose <= 0.256"], "35": ["BMI > -0.894", "Age > -0.063", "Insulin <= -0.302", "BloodPressure > -0.779", "0.256 < Glucose <= 0.995"], "36": ["BMI > -0.894", "Age > -0.063", "Glucose > 0.995", "Insulin <= -0.302", "BloodPressure > -0.779"], "37": ["-0.302 < Insulin <= -0.163"], "38": ["-0.302 < Insulin <= -0.291"], "39": ["-0.291 < Insulin <= -0.163"], "40": ["Glucose <= 1.176", "-0.291 < Insulin <= -0.163"], "41": ["Age <= 0.745", "Glucose <= 1.176", "-0.291 < Insulin <= -0.163"], "42": ["Age > 0.745", "Glucose <= 1.176", "-0.291 < Insulin <= -0.163"], "43": ["Glucose > 1.176", "-0.291 < Insulin <= -0.163"], "44": ["Insulin > -0.163"], "45": ["Age <= -0.488", "Insulin > -0.163"], "46": ["Age <= -0.488", "Insulin > -0.163", "SkinThickness <= 0.253"], "47": ["Age <= -0.488", "Insulin > -0.163", "Glucose <= 1.505", "SkinThickness <= 0.253"], "48": ["Age <= -0.744", "Insulin > -0.163", "Glucose <= 1.505", "SkinThickness <= 0.253"], "49": ["Insulin > -0.163", "Glucose <= 1.505", "-0.744 < Age <= -0.488", "SkinThickness <= 0.253"], "50": ["Insulin > -0.163", "Glucose <= 0.191", "-0.744 < Age <= -0.488", "SkinThickness <= 0.253"], "51": ["Insulin > -0.163", "Glucose <= 0.191", "-0.744 < Age <= -0.488", "SkinThickness <= 0.253", "DiabetesPedigreeFunction <= -0.398"], "52": ["Insulin > -0.163", "Glucose <= 0.191", "-0.744 < Age <= -0.488", "SkinThickness <= 0.253", "DiabetesPedigreeFunction > -0.398"], "53": ["Insulin > -0.163", "-0.744 < Age <= -0.488", "SkinThickness <= 0.253", "0.191 < Glucose <= 1.505"], "54": ["Age <= -0.488", "Glucose > 1.505", "Insulin > -0.163", "SkinThickness <= 0.253"], "55": ["Age <= -0.829", "Glucose > 1.505", "Insulin > -0.163", "SkinThickness <= 0.253"], "56": ["Glucose > 1.505", "Insulin > -0.163", "-0.829 < Age <= -0.488", "SkinThickness <= 0.253"], "57": ["Age <= -0.488", "Insulin > -0.163", "SkinThickness > 0.253"], "58": ["Age <= -0.488", "Insulin > -0.163", "0.253 < SkinThickness <= 0.478"], "59": ["Age <= -0.488", "Insulin > -0.163", "BloodPressure <= -1.854", "0.253 < SkinThickness <= 0.478"], "60": ["Age <= -0.488", "Insulin > -0.163", "BloodPressure > -1.854", "0.253 < SkinThickness <= 0.478"], "61": ["Age <= -0.488", "Insulin > -0.163", "SkinThickness > 0.478"], "62": ["Age <= -0.488", "Insulin > -0.163", "Glucose <= 0.174", "SkinThickness > 0.478"], "63": ["Age <= -0.488", "Insulin > -0.163", "Glucose <= -0.746", "SkinThickness > 0.478"], "64": ["Age <= -0.488", "Insulin > -0.163", "SkinThickness > 0.478", "-0.746 < Glucose <= 0.174"], "65": ["Age <= -0.488", "Glucose > 0.174", "Insulin > -0.163", "SkinThickness > 0.478"], "66": ["Age <= -0.488", "Glucose > 0.174", "SkinThickness > 0.478", "-0.163 < Insulin <= 3.553"], "67": ["Age <= -0.488", "Glucose > 0.174", "-0.163 < Insulin <= 3.553", "0.478 < SkinThickness <= 2.215"], "68": ["Age <= -0.488", "Glucose > 0.174", "-0.163 < Insulin <= 3.553", "0.478 < SkinThickness <= 2.215", "DiabetesPedigreeFunction <= -0.477"], "69": ["BMI <= 0.793", "Age <= -0.488", "Glucose > 0.174", "-0.163 < Insulin <= 3.553", "0.478 < SkinThickness <= 2.215", "DiabetesPedigreeFunction <= -0.477"], "70": ["BMI > 0.793", "Age <= -0.488", "Glucose > 0.174", "-0.163 < Insulin <= 3.553", "0.478 < SkinThickness <= 2.215", "DiabetesPedigreeFunction <= -0.477"], "71": ["Age <= -0.488", "Glucose > 0.174", "-0.163 < Insulin <= 3.553", "0.478 < SkinThickness <= 2.215", "DiabetesPedigreeFunction > -0.477"], "72": ["Age <= -0.488", "Glucose > 0.174", "SkinThickness > 2.215", "-0.163 < Insulin <= 3.553"], "73": ["Age <= -0.488", "Insulin > 3.553", "Glucose > 0.174", "SkinThickness > 0.478"], "74": ["Age > -0.488", "Insulin > -0.163"], "75": ["Age > -0.488", "-0.163 < Insulin <= 0.512"], "76": ["Age > -0.488", "Glucose <= 1.078", "-0.163 < Insulin <= 0.512"], "77": ["Age > -0.488", "Glucose <= 1.078", "-0.163 < Insulin <= 0.327"], "78": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness <= -1.428", "-0.163 < Insulin <= 0.327"], "79": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > -1.428", "-0.163 < Insulin <= 0.327"], "80": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > -1.428", "-0.163 < Insulin <= 0.327", "DiabetesPedigreeFunction <= -0.86"], "81": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > -1.428", "-0.163 < Insulin <= 0.327", "DiabetesPedigreeFunction > -0.86"], "82": ["Age > -0.488", "Glucose <= 1.078", "-0.163 < Insulin <= 0.327", "-1.428 < SkinThickness <= 1.374", "DiabetesPedigreeFunction > -0.86"], "83": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > 1.374", "-0.163 < Insulin <= 0.327", "DiabetesPedigreeFunction > -0.86"], "84": ["Age > -0.488", "Glucose <= 1.078", "0.327 < Insulin <= 0.512"], "85": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness <= 1.206", "0.327 < Insulin <= 0.512"], "86": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > 1.206", "0.327 < Insulin <= 0.512"], "87": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > 1.206", "0.327 < Insulin <= 0.512", "DiabetesPedigreeFunction <= 1.403"], "88": ["Age > -0.488", "Glucose <= 1.078", "SkinThickness > 1.206", "0.327 < Insulin <= 0.512", "DiabetesPedigreeFunction > 1.403"], "89": ["Age > -0.488", "Glucose > 1.078", "-0.163 < Insulin <= 0.512"], "90": ["Age > -0.488", "Insulin > 0.512"], "91": ["Age > -0.488", "0.512 < Insulin <= 0.625"], "92": ["Age > -0.488", "Insulin > 0.625"], "93": ["Age > -0.488", "BMI <= -0.858", "Insulin > 0.625"], "94": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625"], "95": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "DiabetesPedigreeFunction <= 1.837"], "96": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "BloodPressure <= 0.213", "DiabetesPedigreeFunction <= 1.837"], "97": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "BloodPressure <= -0.118", "DiabetesPedigreeFunction <= 1.837"], "98": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "Glucose <= 0.946", "BloodPressure <= -0.118", "DiabetesPedigreeFunction <= 1.837"], "99": ["Age > -0.488", "Insulin > 0.625", "Glucose <= 0.946", "-0.858 < BMI <= 0.051", "BloodPressure <= -0.118", "DiabetesPedigreeFunction <= 1.837"], "100": ["BMI > 0.051", "Age > -0.488", "Insulin > 0.625", "Glucose <= 0.946", "BloodPressure <= -0.118", "DiabetesPedigreeFunction <= 1.837"], "101": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "Glucose > 0.946", "BloodPressure <= -0.118", "DiabetesPedigreeFunction <= 1.837"], "102": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "-0.118 < BloodPressure <= 0.213", "DiabetesPedigreeFunction <= 1.837"], "103": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "BloodPressure > 0.213", "DiabetesPedigreeFunction <= 1.837"], "104": ["Age > -0.488", "BMI > -0.858", "Insulin > 0.625", "DiabetesPedigreeFunction > 1.837"]};
+		var num_node = 105;
+		var root = {"name": "HEAD", "parent": "null", "self": 0, "sample": 537, "impurity": 0.449, "value": [354, 183], "predict": "NO Diabetes", "color": "#ef476f", "pos": "null", "children": [{"name": "Insulin <= -0.163", "parent": 0, "self": 1, "sample": 326, "impurity": 0.147, "value": [300, 26], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Insulin <= -0.302", "parent": 1, "self": 2, "sample": 137, "impurity": 0.279, "value": [114, 23], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Glucose <= 0.191", "parent": 2, "self": 3, "sample": 114, "impurity": 0.174, "value": [103, 11], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "BMI <= 1.877", "parent": 3, "self": 4, "sample": 112, "impurity": 0.148, "value": [103, 9], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "DiabetesPedigreeFunction <= 0.503", "parent": 4, "self": 5, "sample": 89, "impurity": 0.065, "value": [86, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "DiabetesPedigreeFunction <= -0.675", "parent": 5, "self": 6, "sample": 20, "impurity": 0.255, "value": [17, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "DiabetesPedigreeFunction <= -0.697", "parent": 6, "self": 7, "sample": 18, "impurity": 0.105, "value": [17, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Pregnancies <= 1.531", "parent": 7, "self": 8, "sample": 17, "impurity": 0.0, "value": [17, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "Pregnancies > 1.531", "parent": 7, "self": 9, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "DiabetesPedigreeFunction > -0.697", "parent": 6, "self": 10, "sample": 2, "impurity": 0.0, "value": [0, 2], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "DiabetesPedigreeFunction > -0.675", "parent": 5, "self": 11, "sample": 69, "impurity": 0.0, "value": [69, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "DiabetesPedigreeFunction > 0.503", "parent": 4, "self": 12, "sample": 23, "impurity": 0.386, "value": [17, 6], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Pregnancies <= -0.399", "parent": 12, "self": 13, "sample": 15, "impurity": 0.231, "value": [13, 2], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Pregnancies <= -0.993", "parent": 13, "self": 14, "sample": 2, "impurity": 0.5, "value": [1, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "SkinThickness <= 0.59", "parent": 14, "self": 15, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "SkinThickness > 0.59", "parent": 14, "self": 16, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "Pregnancies > -0.993", "parent": 13, "self": 17, "sample": 13, "impurity": 0.142, "value": [12, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "SkinThickness <= -0.924", "parent": 17, "self": 18, "sample": 4, "impurity": 0.375, "value": [3, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "SkinThickness <= -1.148", "parent": 18, "self": 19, "sample": 3, "impurity": 0.0, "value": [3, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "SkinThickness > -1.148", "parent": 18, "self": 20, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "SkinThickness > -0.924", "parent": 17, "self": 21, "sample": 9, "impurity": 0.0, "value": [9, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}, {"name": "Pregnancies > -0.399", "parent": 12, "self": 22, "sample": 8, "impurity": 0.5, "value": [4, 4], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Age <= -0.02", "parent": 22, "self": 23, "sample": 4, "impurity": 0.0, "value": [0, 4], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "Age > -0.02", "parent": 22, "self": 24, "sample": 4, "impurity": 0.0, "value": [4, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}, {"name": "BMI > 1.877", "parent": 3, "self": 25, "sample": 2, "impurity": 0.0, "value": [0, 2], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "Glucose > 0.191", "parent": 2, "self": 26, "sample": 23, "impurity": 0.499, "value": [11, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "BMI <= -0.894", "parent": 26, "self": 27, "sample": 5, "impurity": 0.0, "value": [5, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "BMI > -0.894", "parent": 26, "self": 28, "sample": 18, "impurity": 0.444, "value": [6, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "BloodPressure <= -0.779", "parent": 28, "self": 29, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "BloodPressure > -0.779", "parent": 28, "self": 30, "sample": 16, "impurity": 0.375, "value": [4, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Age <= -0.063", "parent": 30, "self": 31, "sample": 8, "impurity": 0.0, "value": [0, 8], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "Age > -0.063", "parent": 30, "self": 32, "sample": 8, "impurity": 0.5, "value": [4, 4], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Glucose <= 0.995", "parent": 32, "self": 33, "sample": 5, "impurity": 0.32, "value": [1, 4], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "Glucose <= 0.256", "parent": 33, "self": 34, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "Glucose > 0.256", "parent": 33, "self": 35, "sample": 4, "impurity": 0.0, "value": [0, 4], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "Glucose > 0.995", "parent": 32, "self": 36, "sample": 3, "impurity": 0.0, "value": [3, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}]}]}, {"name": "Insulin > -0.302", "parent": 1, "self": 37, "sample": 189, "impurity": 0.031, "value": [186, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Insulin <= -0.291", "parent": 37, "self": 38, "sample": 178, "impurity": 0.0, "value": [178, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "Insulin > -0.291", "parent": 37, "self": 39, "sample": 11, "impurity": 0.397, "value": [8, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Glucose <= 1.176", "parent": 39, "self": 40, "sample": 9, "impurity": 0.198, "value": [8, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Age <= 0.745", "parent": 40, "self": 41, "sample": 8, "impurity": 0.0, "value": [8, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "Age > 0.745", "parent": 40, "self": 42, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "Glucose > 1.176", "parent": 39, "self": 43, "sample": 2, "impurity": 0.0, "value": [0, 2], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}]}]}, {"name": "Insulin > -0.163", "parent": 0, "self": 44, "sample": 211, "impurity": 0.381, "value": [54, 157], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Age <= -0.488", "parent": 44, "self": 45, "sample": 63, "impurity": 0.5, "value": [32, 31], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "SkinThickness <= 0.253", "parent": 45, "self": 46, "sample": 27, "impurity": 0.346, "value": [21, 6], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Glucose <= 1.505", "parent": 46, "self": 47, "sample": 23, "impurity": 0.227, "value": [20, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Age <= -0.744", "parent": 47, "self": 48, "sample": 17, "impurity": 0.0, "value": [17, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "Age > -0.744", "parent": 47, "self": 49, "sample": 6, "impurity": 0.5, "value": [3, 3], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "Glucose <= 0.191", "parent": 49, "self": 50, "sample": 4, "impurity": 0.375, "value": [3, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "DiabetesPedigreeFunction <= -0.398", "parent": 50, "self": 51, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "DiabetesPedigreeFunction > -0.398", "parent": 50, "self": 52, "sample": 3, "impurity": 0.0, "value": [3, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "Glucose > 0.191", "parent": 49, "self": 53, "sample": 2, "impurity": 0.0, "value": [0, 2], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}]}, {"name": "Glucose > 1.505", "parent": 46, "self": 54, "sample": 4, "impurity": 0.375, "value": [1, 3], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Age <= -0.829", "parent": 54, "self": 55, "sample": 3, "impurity": 0.0, "value": [0, 3], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "Age > -0.829", "parent": 54, "self": 56, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}, {"name": "SkinThickness > 0.253", "parent": 45, "self": 57, "sample": 36, "impurity": 0.424, "value": [11, 25], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "SkinThickness <= 0.478", "parent": 57, "self": 58, "sample": 14, "impurity": 0.133, "value": [1, 13], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "BloodPressure <= -1.854", "parent": 58, "self": 59, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "BloodPressure > -1.854", "parent": 58, "self": 60, "sample": 13, "impurity": 0.0, "value": [0, 13], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "SkinThickness > 0.478", "parent": 57, "self": 61, "sample": 22, "impurity": 0.496, "value": [10, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Glucose <= 0.174", "parent": 61, "self": 62, "sample": 7, "impurity": 0.245, "value": [6, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "Glucose <= -0.746", "parent": 62, "self": 63, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "Glucose > -0.746", "parent": 62, "self": 64, "sample": 6, "impurity": 0.0, "value": [6, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "Glucose > 0.174", "parent": 61, "self": 65, "sample": 15, "impurity": 0.391, "value": [4, 11], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Insulin <= 3.553", "parent": 65, "self": 66, "sample": 13, "impurity": 0.26, "value": [2, 11], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "SkinThickness <= 2.215", "parent": 66, "self": 67, "sample": 12, "impurity": 0.153, "value": [1, 11], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "DiabetesPedigreeFunction <= -0.477", "parent": 67, "self": 68, "sample": 2, "impurity": 0.5, "value": [1, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left", "children": [{"name": "BMI <= 0.793", "parent": 68, "self": 69, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "BMI > 0.793", "parent": 68, "self": 70, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "DiabetesPedigreeFunction > -0.477", "parent": 67, "self": 71, "sample": 10, "impurity": 0.0, "value": [0, 10], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "SkinThickness > 2.215", "parent": 66, "self": 72, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "Insulin > 3.553", "parent": 65, "self": 73, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}]}, {"name": "Age > -0.488", "parent": 44, "self": 74, "sample": 148, "impurity": 0.253, "value": [22, 126], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Insulin <= 0.512", "parent": 74, "self": 75, "sample": 34, "impurity": 0.457, "value": [12, 22], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "Glucose <= 1.078", "parent": 75, "self": 76, "sample": 25, "impurity": 0.499, "value": [12, 13], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "Insulin <= 0.327", "parent": 76, "self": 77, "sample": 18, "impurity": 0.444, "value": [6, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "SkinThickness <= -1.428", "parent": 77, "self": 78, "sample": 3, "impurity": 0.0, "value": [3, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "SkinThickness > -1.428", "parent": 77, "self": 79, "sample": 15, "impurity": 0.32, "value": [3, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "DiabetesPedigreeFunction <= -0.86", "parent": 79, "self": 80, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "DiabetesPedigreeFunction > -0.86", "parent": 79, "self": 81, "sample": 13, "impurity": 0.142, "value": [1, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "SkinThickness <= 1.374", "parent": 81, "self": 82, "sample": 12, "impurity": 0.0, "value": [0, 12], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "SkinThickness > 1.374", "parent": 81, "self": 83, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}, {"name": "Insulin > 0.327", "parent": 76, "self": 84, "sample": 7, "impurity": 0.245, "value": [6, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "SkinThickness <= 1.206", "parent": 84, "self": 85, "sample": 5, "impurity": 0.0, "value": [5, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "SkinThickness > 1.206", "parent": 84, "self": 86, "sample": 2, "impurity": 0.5, "value": [1, 1], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right", "children": [{"name": "DiabetesPedigreeFunction <= 1.403", "parent": 86, "self": 87, "sample": 1, "impurity": 0.0, "value": [0, 1], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "DiabetesPedigreeFunction > 1.403", "parent": 86, "self": 88, "sample": 1, "impurity": 0.0, "value": [1, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}, {"name": "Glucose > 1.078", "parent": 75, "self": 89, "sample": 9, "impurity": 0.0, "value": [0, 9], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "Insulin > 0.512", "parent": 74, "self": 90, "sample": 114, "impurity": 0.16, "value": [10, 104], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "Insulin <= 0.625", "parent": 90, "self": 91, "sample": 80, "impurity": 0.0, "value": [0, 80], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "Insulin > 0.625", "parent": 90, "self": 92, "sample": 34, "impurity": 0.415, "value": [10, 24], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "BMI <= -0.858", "parent": 92, "self": 93, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "left"}, {"name": "BMI > -0.858", "parent": 92, "self": 94, "sample": 32, "impurity": 0.375, "value": [8, 24], "predict": "Diabetes", "color": "#073b4c", "pos": "right", "children": [{"name": "DiabetesPedigreeFunction <= 1.837", "parent": 94, "self": 95, "sample": 30, "impurity": 0.32, "value": [6, 24], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "BloodPressure <= 0.213", "parent": 95, "self": 96, "sample": 15, "impurity": 0.48, "value": [6, 9], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "BloodPressure <= -0.118", "parent": 96, "self": 97, "sample": 11, "impurity": 0.298, "value": [2, 9], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "Glucose <= 0.946", "parent": 97, "self": 98, "sample": 5, "impurity": 0.48, "value": [2, 3], "predict": "Diabetes", "color": "#073b4c", "pos": "left", "children": [{"name": "BMI <= 0.051", "parent": 98, "self": 99, "sample": 3, "impurity": 0.0, "value": [0, 3], "predict": "Diabetes", "color": "#073b4c", "pos": "left"}, {"name": "BMI > 0.051", "parent": 98, "self": 100, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "Glucose > 0.946", "parent": 97, "self": 101, "sample": 6, "impurity": 0.0, "value": [0, 6], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "BloodPressure > -0.118", "parent": 96, "self": 102, "sample": 4, "impurity": 0.0, "value": [4, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}, {"name": "BloodPressure > 0.213", "parent": 95, "self": 103, "sample": 15, "impurity": 0.0, "value": [0, 15], "predict": "Diabetes", "color": "#073b4c", "pos": "right"}]}, {"name": "DiabetesPedigreeFunction > 1.837", "parent": 94, "self": 104, "sample": 2, "impurity": 0.0, "value": [2, 0], "predict": "NO Diabetes", "color": "#ef476f", "pos": "right"}]}]}]}]}]}]};
+		var width = 4000, height = 4000;
+		var n_classes = 2;
+
+		// calculate tree gap
+		var tree_gap = (width - margin['left'] - margin['right']) * 1.0 / tree_depth;
+
+		// generate tree layout (horizonal)
+		var tree = d3.layout.tree().size([height, width]);
+		var diagonal = d3.svg.diagonal()
+			.projection(function (d) {
+				return [d.y, d.x];
+			});
+
+		var svg = d3.select('body').append('svg')
+			.attr('width', width + margin.right + margin.left)
+			.attr('height', height + margin.top + margin.bottom)
+			.append('g')
+			.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+		// color scale based on node impurity
+		var node_color_scale = d3.scale.linear()
+			.domain([1.0 / n_classes + 0.1, 0.])
+			.clamp(true);
+
+		var i = 0, duration = 750;
+		root.x0 = height / 2;
+		root.y0 = 0;
+
+		// update tree
+		update(root);
+
+
+		function update(source) {
+
+			// compute the tree layout
+			var nodes = tree.nodes(root).reverse(),
+				links = tree.links(nodes);
+
+			// normalize for fixed-depth
+			nodes.forEach(function (d) {
+				d.y = d.depth * tree_gap;
+			});
+
+			// draw the nodes
+			var node = svg.selectAll('g.node')
+				.data(nodes, function (d) {
+					return d.id || (d.id = ++i);
+				});
+
+			// enter any new nodes at the parent's previous position
+			var nodeEnter = node.enter().append('g')
+				.attr('class', 'node')
+				.on('click', click)
+				.attr('transform', function (d) {
+					return 'translate(' + source.y0 + ',' + source.x0 + ')';
+				})
+				.on('click', click)
+				.on('mouseover', mouseover)
+				.on('mouseout', mouseout);
+
+			// draw tree nodes
+			nodeEnter.append('circle')
+				.attr('r', 1e-6)
+				.style('fill', function (d) {
+					// d.color is the target color
+					node_color_scale.range(['#fff', d.color]);
+					return node_color_scale(d.impurity);
+				})
+				.style('stroke', function (d) {
+					return d.color;
+				})
+				.on('mouseover', function (d) {
+					if (!d.children) {
+						d3.select(this).style('fill', function (d) {
+							return d.color;
+						});
+						recurse(d, d.color);
+					}
+				})
+				// when mouseout, recover everything
+				.on('mouseout', function (d) {
+					d3.select(this).style('fill', function (d) {
+						node_color_scale.range(['#fff', d.color]);
+						return node_color_scale(d.impurity);
+					}).attr('r', function (d) {
+						// when the node is collapesd, increase the size
+						return d._children ? 20 : 10;
+					});
+					d3.selectAll('.link')
+						.style('stroke-width', '2')
+						.style('stroke', '#ccc');
+				});
+
+			// add text on tree nodes
+			var text = nodeEnter.append('text')
+				.attr('x', 13)
+				.attr('dy', '-0.5em');
+
+			text.append('tspan')
+				.style('font-weight', 'bold')
+				.text(function (d) {
+					return d.name;
+				});
+
+			text.append('tspan')
+				.attr('x', 13)
+				.attr('y', 8)
+				.text(function (d) {
+					return 'Values: [' + d.value + ']';
+				});
+
+			text.append('tspan')
+				.attr('x', 13)
+				.attr('y', 22)
+				.text(function (d) {
+					return 'Predict: ' + d.predict;
+				});
+
+			nodeEnter.select('text').style('fill-opacity', 0);
+
+			// transform tree nodes to their initial positions
+			var nodeUpdate = node.transition()
+				.duration(duration)
+				.attr('transform', function (d) {
+					return 'translate(' + d.y + ',' + d.x + ')';
+				});
+
+			nodeUpdate.select('circle')
+				.attr('r', function (d) {
+					return d._children ? 20 : 10;
+				})
+				.style('stroke', function (d) {
+					return d.color;
+				})
+				.style('fill', function (d) {
+					node_color_scale.range(['#fff', d.color]);
+					return node_color_scale(d.impurity);
+				});
+
+			nodeUpdate.select('text').style('fill-opacity', 1);
+
+			// transition exiting nodes to the parent's new position
+			var nodeExit = node.exit().transition()
+				.duration(duration)
+				.attr('transform', function (d) {
+					return 'translate(' + source.y + ',' + source.x + ')';
+				})
+				.remove();
+
+			// hide nodes and texts
+			nodeExit.select('circle').attr('r', 1e-6);
+			nodeExit.select('text').style('fill-opacity', 0);
+
+			// draw the links
+			var link = svg.selectAll('path.link')
+				.data(links, function (d) {
+					return d.target.id;
+				});
+
+			// enter any new links at the parent's previous position
+			link.enter().insert('path', 'g')
+				.attr('class', 'link')
+				.attr('d', function (d) {
+					var o = { x: source.x0, y: source.y0 };
+					return diagonal({ source: o, target: o });
+				});
+
+			// transition links to their new position
+			link.transition()
+				.duration(duration)
+				.attr('d', diagonal);
+
+			// transition the existing links to the parent's new position
+			link.exit().transition()
+				.duration(duration)
+				.attr('d', function (d) {
+					var o = { x: source.x, y: source.y };
+					return diagonal({ source: o, target: o });
+				}).remove();
+
+			// stash the old positions for transition
+			nodes.forEach(function (d) {
+				d.x0 = d.x;
+				d.y0 = d.y;
+			});
+		}
+
+		// recursively color the links when hovering on a tree node
+		function recurse(d, color) {
+			d3.selectAll('.link').each(function (l) {
+				if (l.target === d) {
+					d3.select(this).style('stroke-width', 4).style('stroke', color);
+				}
+			});
+			if (d.parent) {
+				recurse(d.parent, color);
+			}
+		}
+
+		function mouseover(d) {
+			// if this node has no children nodes
+			if (!d.children) {
+				var rule = rules[d.self];
+				var append = ['Predict: ' + d.predict, 'Impurity: ' + d.impurity, ''];
+				rule = append.concat(rule);
+
+				var len = rule.length;
+				var info = d3.select(this).append('g').attr('class', 'hover');
+				var y0 = 35;
+				var rules_text = info.append('g').append('text').attr('y', y0);
+
+				for (var i = 1; i <= len; i++) {
+					rules_text.append('tspan')
+						.attr('x', 0)
+						.attr('y', y0 + i * 15)
+						.attr('text-anchor', 'left')
+						.style('font-weight', function () {
+							if (i <= 3) {
+								return 'bold';
+							} else {
+								return null;
+							}
+						})
+						.style('fill', function () {
+							if (i <= 3) {
+								return '#000';
+							} else {
+								return d.color;
+							}
+						})
+						.text(function () {
+							return rule[i - 1];
+						});
+				}
+
+				// draw the box
+				var bbox = info.node().getBBox();
+				var padding = 10;
+				var rect = d3.select(this).insert('rect', 'g')
+					.attr('class', 'info_bg')
+					.attr('x', bbox.x - padding)
+					.attr('y', bbox.y - padding)
+					.attr('width', bbox.width + padding * 2)
+					.attr('height', bbox.height + padding * 2)
+					.style('fill', 'white')
+					.style('stroke', d.color)
+					.style('stroke-width', 2);
+
+				// make the rule infomation on the first layer
+				this.parentNode.appendChild(this);
+			}
+		}
+
+		function mouseout(d) {
+			d3.select('.hover').remove();
+			d3.select('.info_bg').remove();
+		}
+
+		function click(d) {
+			if (d.children) {
+				d._children = d.children;
+				d.children = null;
+			} else {
+				d.children = d._children;
+				d._children = null;
+			}
+			update(d);
+		}
+
+	</script>
+</body>
+
+</html>
